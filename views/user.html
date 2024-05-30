@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment App</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <h1>Appointment Booking</h1>
+    <form id="appointmentForm" method="post" onsubmit="userDetails(event)">
+        <label for="userName">Name : </label>
+        <input type="text" name="userName" id="userName"> 
+        <label for="email">EmailId : </label>
+        <input type="email" name="email" id="email"> 
+        <label for="phoneNumber">Phone Number : </label>
+        <input type="tel" name="phoneNumber" id="phoneNumber"> 
+        <button type="submit">Book Appointment</button>
+    </form>
+    <ul id="usersList"></ul>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.2/axios.min.js"></script>
+
+    <script>
+        function userDetails(event) {
+            event.preventDefault();
+    
+            const userName = document.getElementById('userName').value;
+            const email = document.getElementById('email').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+    
+            const obj = {
+                userName,
+                email,
+                phoneNumber
+            };
+    
+            axios.post("http://localhost:3000/user/add-user", obj)
+                .then((response) => {
+                    console.log(response);
+                    showUser(response.data.newUserDetails);
+                })
+                .catch((error) => {
+                    document.body.innerHTML += `<h4> Something Went Wrong </h4>`;
+                    console.log(error);
+                });
+        }
+    
+        window.addEventListener("DOMContentLoaded", () => {
+            axios.get("http://localhost:3000/user/get-users")
+                .then((response) => {
+                    console.log(response);
+    
+                    response.data.allUsers.forEach(user => {
+                        showUser(user);
+                    });
+                })
+                .catch(err => console.log(err));
+        });
+    
+        function showUser(user) {
+            document.getElementById('email').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('phoneNumber').value = '';
+    
+            const usersList = document.getElementById('usersList');
+    
+            const newUser = document.createElement('li');
+            newUser.id = user.id;
+            newUser.innerHTML = `${user.userName} - ${user.email} - ${user.phoneNumber}
+            <button onclick="deleteUser('${user.id}')">Delete User</button>
+            <button onclick="editUser('${user.email}','${user.userName}','${user.phoneNumber}','${user.id}')">Edit User</button>`;
+            usersList.appendChild(newUser); 
+        }
+    
+        function editUser(email, userName, phoneNumber, userId) {
+            document.getElementById('email').value = email;
+            document.getElementById('userName').value = userName;
+            document.getElementById('phoneNumber').value = phoneNumber;
+    
+            deleteUser(userId);
+        }
+    
+        function deleteUser(userId) {
+            axios.delete(`http://localhost:3000/user/delete-user/${userId}`)
+                .then((response) => {
+                    removeUserOnScreen(userId);
+                })
+                .catch(err => console.log(err));
+        }
+    
+        function removeUserOnScreen(userId) {
+            const usersList = document.getElementById('usersList');
+            const newUserToDelete = document.getElementById(userId);
+            if (newUserToDelete) {
+                usersList.removeChild(newUserToDelete);
+            }
+        }
+    </script>
+    
+</body>
+</html>
